@@ -34,5 +34,6 @@ public class MyButtonOnClickListener implements View.OnClickListener {
 
     public void onClick(View v) {
         // Implemented in WordListAdapter
+
     }
 }

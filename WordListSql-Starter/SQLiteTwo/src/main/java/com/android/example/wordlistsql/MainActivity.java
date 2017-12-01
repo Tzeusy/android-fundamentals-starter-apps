@@ -22,7 +22,9 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.view.View;
+import android.widget.Toast;
 
 /**
  * Implements a RecyclerView that displays a list of words from a SQL database.
@@ -40,16 +42,19 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView mRecyclerView;
     private WordListAdapter mAdapter;
 
+    private WordListOpenHelper mDB;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mDB = new WordListOpenHelper(this);
 
 
         // Create recycler view.
         mRecyclerView = (RecyclerView) findViewById(R.id.recyclerview);
         // Create an mAdapter and supply the data to be displayed.
-        mAdapter = new WordListAdapter(this);
+        mAdapter = new WordListAdapter(this,mDB);
         // Connect the mAdapter with the recycler view.
         mRecyclerView.setAdapter(mAdapter);
         // Give the recycler view a default layout manager.
@@ -69,6 +74,24 @@ public class MainActivity extends AppCompatActivity {
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode==WORD_EDIT){
+            if(resultCode==RESULT_OK){
+                String word = data.getStringExtra(EditWordActivity.EXTRA_REPLY);
+                if(!TextUtils.isEmpty(word)){
+                    int id= data.getIntExtra(WordListAdapter.EXTRA_ID,-99);
+                    if(id==WORD_ADD){
+                        mDB.insert(word);
+                        mAdapter.notifyDataSetChanged();
+                    }
+                    else if(id>=0){
+                        mDB.update(id,word);
+                    }
+                }
+                else{
+                    Toast.makeText(getApplicationContext(),R.string.empty_not_saved,Toast.LENGTH_LONG).show();
+                }
+            }
+        }
         // Add code to update the database.
     }
 }

@@ -16,7 +16,9 @@
 
 package com.android.example.wordlistsql;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,6 +35,7 @@ public class WordListAdapter extends RecyclerView.Adapter<WordListAdapter.WordVi
     /**
      *  Custom view holder with a text view and two buttons.
      */
+    WordListOpenHelper mDB;
     class WordViewHolder extends RecyclerView.ViewHolder {
         public final TextView wordItemView;
         Button delete_button;
@@ -54,9 +57,10 @@ public class WordListAdapter extends RecyclerView.Adapter<WordListAdapter.WordVi
     private final LayoutInflater mInflater;
     Context mContext;
 
-    public WordListAdapter(Context context) {
+    public WordListAdapter(Context context, WordListOpenHelper db) {
         mInflater = LayoutInflater.from(context);
         mContext = context;
+        mDB = db;
     }
 
     @Override
@@ -67,14 +71,40 @@ public class WordListAdapter extends RecyclerView.Adapter<WordListAdapter.WordVi
 
     @Override
     public void onBindViewHolder(WordViewHolder holder, int position) {
-        holder.wordItemView.setText("placeholder");
+
+        WordItem current = mDB.query(position);
+        holder.wordItemView.setText(current.getmWord());
+
+        final WordViewHolder h = holder;
+        holder.edit_button.setOnClickListener(new MyButtonOnClickListener(
+                current.getmId(),current.getmWord()){
+                    @Override
+                    public void onClick(View v){
+                        Intent intent = new Intent(mContext,EditWordActivity.class);
+                        intent.putExtra(EXTRA_ID,id);
+                        intent.putExtra("POSITION",h.getAdapterPosition());
+                        intent.putExtra(EXTRA_WORD,word);
+                        ((Activity)mContext).startActivityForResult(
+                                intent,MainActivity.WORD_EDIT);
+                    }
+                }
+        );
+        holder.delete_button.setOnClickListener(
+            new MyButtonOnClickListener(current.getmId(),null){
+                @Override
+                public void onClick(View v){
+                    int deleted = mDB.delete(id);
+                    if(deleted>=0) notifyItemRemoved(h.getAdapterPosition());;
+                }
+            });
     }
 
     @Override
     public int getItemCount() {
         // Placeholder so we can see some mock data.
-        return 10;
+        return (int)mDB.count();
     }
+
 }
 
 
